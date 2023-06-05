@@ -7,62 +7,92 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { isValid } from 'date-fns'
 
 export default function Home() {
-  const [date, setDate] = useState('- -');
+  const [date, setDate] = useState<string>('- -');
   const [month, setMonth] = useState('- -');
-  const [year, setYear] = useState('- -');
+  const [year, setYear] = useState<string>('- -');
 
+
+  const validateDay = (val: any, ctx: any) => {
+    const day = parseInt(val);
+
+    if (!(day >= 1 && day <= 31)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Must be a valid day`,
+      });
+    }
+  };
+
+  const validateMonth = (val: any, ctx: any) => {
+    const month = parseInt(val);
+
+    if (!(month >= 1 && month <= 12)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Must be a valid month`,
+      });
+    }
+  };
+
+  const validateYear = (val: any, ctx: any) => {
+    const currentYear = new Date().getFullYear();
+    const year = parseInt(val);
+
+    if (year > currentYear) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Must be in the past`,
+      });
+    }
+  };
 
   const schema = z.object({
-    date: z
-      .string()
-      .min(1, { message: "This field is required" })
-      .superRefine((val, ctx) => {
-        const day = parseInt(val);
-        if (!(day >= 1 && day <= 31)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Must be a valid day`,
-          });
-        }
-      }),
+    date: z.string().min(1, { message: "This field is required" }).superRefine(validateDay),
 
-    month: z
-      .string()
-      .min(1, { message: "This field is required" })
-      .superRefine((val, ctx) => {
-        const month = parseInt(val);
-        if (!(month >= 1 && month <= 12)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Must be a valid month`,
-          });
-        }
-      }),
+    month: z.string().min(1, { message: "This field is required" }).superRefine(validateMonth),
 
-    year: z
-      .string()
+    year: z.string()
       .min(1, { message: "This field is required" })
       .max(4, { message: "Must be a valid year" })
-      .superRefine((val, ctx) => {
-        const currentYear = new Date().getFullYear();
-        const year = parseInt(val);
-        if (year > currentYear) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Must be in the past`,
-          });
-        }
-      }),
-  }).refine((data) => {
-    const month = parseInt(data.month);
-    const year = parseInt(data.year);
-    const date = new Date(year, month - 1, parseInt(data.date));
+      .superRefine(validateYear),
+  })
+    .refine((data) => {
+      const month = parseInt(data.month);
+      const year = parseInt(data.year);
+      const date = new Date(year, month - 1, parseInt(data.date));
 
-    return isValid(date) && date.getDate() === parseInt(data.date);
-  }, {
-    message: "Must be a valid date",
-    path: ["date"],
-  });
+      return isValid(date) && date.getDate() === parseInt(data.date);
+    }, {
+      message: "Must be a valid date",
+      path: ["date"],
+    })
+    .refine((data) => {
+      if (
+        parseInt(data.year) === new Date().getFullYear() &&
+        parseInt(data.month) > new Date().getMonth() + 1
+      ) {
+        return false;
+      } else {
+        return true;
+      }
+    }, {
+      message: "Must be in the past",
+      path: ["month"],
+    })
+    .refine((data) => {
+      if (
+        parseInt(data.year) === new Date().getFullYear() &&
+        parseInt(data.month) === new Date().getMonth() + 1 &&
+        parseInt(data.date) > new Date().getDate()
+      ) {
+        return false;
+      } else {
+        return true;
+      }
+    }, {
+      message: "Must be in the past",
+      path: ["date"],
+    });
 
   type FormData = z.infer<typeof schema>
 
@@ -107,7 +137,7 @@ export default function Home() {
               placeholder='DD'
               autoComplete='off'
             />
-            {errors.date && <span className='italic text-primary-light-red'>{errors.date.message}</span>}
+            {errors.date && <span className='text-sm italic text-primary-light-red'>{errors.date.message}</span>}
           </div>
           <div className='flex flex-col gap-1'>
             <label className={`block font-bold ${errors.month ? 'text-primary-light-red' : 'text-neutral-smokey-grey'}`} htmlFor="dat">MONTH</label>
@@ -117,7 +147,7 @@ export default function Home() {
               placeholder='MM'
               autoComplete='off'
             />
-            {errors.month && <span className='italic text-primary-light-red'>{errors.month.message}</span>}
+            {errors.month && <span className='text-sm italic text-primary-light-red'>{errors.month.message}</span>}
           </div>
           <div className='flex flex-col gap-1'>
             <label className={`block font-bold ${errors.year ? 'text-primary-light-red' : 'text-neutral-smokey-grey'}`} htmlFor="da">YEAR</label>
@@ -126,7 +156,7 @@ export default function Home() {
               type="number" {...register("year")}
               placeholder='YYYY'
               autoComplete='off' />
-            {errors.year && <span className='italic text-primary-light-red'>{errors.year.message}</span>}
+            {errors.year && <span className='text-sm italic text-primary-light-red'>{errors.year.message}</span>}
           </div>
         </div>
 
