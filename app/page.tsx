@@ -4,43 +4,66 @@ import Image from 'next/image'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { isValid } from 'date-fns'
 
 export default function Home() {
-  const [date, setDate] = useState('--');
-  const [month, setMonth] = useState('--');
-  const [year, setYear] = useState('--');
+  const [date, setDate] = useState('- -');
+  const [month, setMonth] = useState('- -');
+  const [year, setYear] = useState('- -');
 
 
   const schema = z.object({
-    date: z.string().min(1, { message: "This field is required" }).superRefine((val, ctx) => {
-      if (!(parseInt(val) >= 1 && parseInt(val) <= 31)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Must be a valid day`,
-        });
-      }
-    }),
+    date: z
+      .string()
+      .min(1, { message: "This field is required" })
+      .superRefine((val, ctx) => {
+        const day = parseInt(val);
+        if (!(day >= 1 && day <= 31)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Must be a valid day`,
+          });
+        }
+      }),
 
-    month: z.string().min(1, { message: "This field is required" }).superRefine((val, ctx) => {
-      if (!(parseInt(val) >= 1 && parseInt(val) <= 12)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Must be a valid month`,
-        });
-      }
-    }),
+    month: z
+      .string()
+      .min(1, { message: "This field is required" })
+      .superRefine((val, ctx) => {
+        const month = parseInt(val);
+        if (!(month >= 1 && month <= 12)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Must be a valid month`,
+          });
+        }
+      }),
 
-    year: z.string().min(1, { message: "This field is required" }).max(4, { message: "Must be a valid month" }).superRefine((val, ctx) => {
-      const currentYear = (new Date()).getFullYear();
-      const year = parseInt(val);
-      if (year > currentYear) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Must be in the past`,
-        });
-      }
-    }),
+    year: z
+      .string()
+      .min(1, { message: "This field is required" })
+      .max(4, { message: "Must be a valid year" })
+      .superRefine((val, ctx) => {
+        const currentYear = new Date().getFullYear();
+        const year = parseInt(val);
+        if (year > currentYear) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Must be in the past`,
+          });
+        }
+      }),
+  }).refine((data) => {
+    const month = parseInt(data.month);
+    const year = parseInt(data.year);
+    const date = new Date(year, month - 1, parseInt(data.date));
+
+    return isValid(date) && date.getDate() === parseInt(data.date);
+  }, {
+    message: "Must be a valid date",
+    path: ["date"],
   });
+
   type FormData = z.infer<typeof schema>
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
@@ -70,13 +93,10 @@ export default function Home() {
     setDate(ageDays.toString());
     setMonth(ageMonths.toString());
     setYear(ageYears.toString());
-    // console.log(ageYears);
-    // console.log(ageMonths);
-    // console.log(ageDays);
   }
 
   return (
-    <div className='max-w-[343px] sm:max-w-[840px] sm:space-y-0 space-y-8 p-8 sm:p-14 bg-white rounded-3xl rounded-ee-[100px]'>
+    <div className='max-w-[343px] sm:max-w-[840px] sm:space-y-0 space-y-8 p-8 sm:p-14 bg-white rounded-3xl rounded-ee-[100px] sm:rounded-ee-[200px]'>
       <form onSubmit={handleSubmit(onSubmit)}  >
         <div className='flex gap-4 sm:gap-8 sm:w-9/12'>
           <div className='flex flex-col gap-1'>
