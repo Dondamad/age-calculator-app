@@ -53,6 +53,7 @@ Users should be able to:
 
 ### Built with
 
+- Mobile-first workflow
 - [React](https://reactjs.org/) - JS library
 - [Next.js](https://nextjs.org/) - React framework
 - [Tailwind CSS](https://tailwindcss.com/) - For styles
