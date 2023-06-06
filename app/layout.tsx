@@ -22,6 +22,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppinss.variable} items-center flex flex-col justify-center h-screen sm:flex-col bg-neutral-light-grey`}>
         <main>
+          <h1 className="sr-only">Age calculator app</h1>
           {children}
         </main>
         <footer className="absolute justify-center hidden text-center bottom-3 sm:block sm:bottom-3">
